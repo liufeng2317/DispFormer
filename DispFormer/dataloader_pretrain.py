@@ -56,13 +56,13 @@ class DispersionDatasets(Dataset):
                  layer_number     = 100,
                  layer_used_range = [0,100],
                  layer_interp_kind="nearest",
-                 num_workers=4,
+                 num_workers      =4,
                  augmentation_train_data = True,
-                 noise_level=0.02,
-                 mask_ratio=0.1,
+                 noise_level      = 0.02,
+                 mask_ratio       = 0.1,
                  remove_phase_ratio=0.1,
                  remove_group_ratio=0.1,
-                 max_masking_length = 30
+                 max_masking_length= 30
                  ):  # Add num_workers for parallel processing
         self.input_data_path         = input_data_path
         self.input_label_path        = input_label_path
@@ -98,11 +98,15 @@ class DispersionDatasets(Dataset):
 
     def augmentation(self, input_data):
         """Augmentation"""
-        input_data = add_gaussian_noise(input_data,noise_level=self.noise_level)
-        input_data = random_masking(input_data,mask_ratio=self.mask_ratio)
-        # input_data = begin_end_masking(input_data,masking_value=-1,max_masking_length=np.random.randint(self.max_masking_length))
-        # input_data = random_remove_phase_or_group(input_data,remove_phase_ratio=self.remove_phase_ratio,remove_group_ratio=self.remove_group_ratio,masking_value=-1)
-        # input_data = add_random_padding(input_data,padding_value=-1,max_padding_length=np.random.randint(20))
+        if self.noise_level>0:
+            input_data = add_gaussian_noise(input_data,noise_level=self.noise_level)
+            
+        if self.mask_ratio>0:
+            input_data = random_masking(input_data,mask_ratio=self.mask_ratio)
+            
+        if self.remove_group_ratio>0 or self.remove_phase_ratio >0:
+            input_data = random_remove_phase_or_group(input_data,remove_phase_ratio=self.remove_phase_ratio,remove_group_ratio=self.remove_group_ratio,masking_value=-1)
+        
         return input_data
 
     def interp_vs(self, output_data):
@@ -111,7 +115,6 @@ class DispersionDatasets(Dataset):
         F = interpolate.interp1d(depth, vs, kind=self.layer_interp_kind, fill_value="extrapolate")
         interp_depth = np.arange(depth.min(), depth.max(), self.layer_thickness)
         interp_vs = F(interp_depth)
-        
         # padding or clip the datasets
         if len(interp_vs) < self.layer_number:
             # Calculate the number of elements to add
@@ -152,16 +155,42 @@ class DispersionDatasets(Dataset):
         input_mask = (input_data[1, :] <= 0) & (input_data[2, :] <= 0)
         phase_mask = input_data[1, :] > 0
         group_mask = input_data[2, :] > 0
-        phase_min_period,phase_max_period = input_data[0,:][phase_mask].min(),input_data[0,:][phase_mask].max()
-        group_min_period,group_max_period = input_data[0,:][group_mask].min(),input_data[0,:][group_mask].max()
-        min_depth       = 1/3 * (phase_min_period*input_data[1,np.argwhere(input_data[0,:] == phase_min_period)[0]])
-        # set the min depth to 0 (ensure a better results generating from the top to bottom)
-        # min_depth = 0
+        if sum(phase_mask)>0:
+            phase_min_period,phase_max_period = input_data[0,:][phase_mask].min(),input_data[0,:][phase_mask].max()
+            # the maximum depth
+            max_depth_phase = 1.1 * (phase_max_period*input_data[1,np.argwhere(input_data[0,:]==phase_max_period)[0]])[0]
+            # the minimum depth 
+            min_depth_phase = 1/3 * (phase_min_period*input_data[1,np.argwhere(input_data[0,:] == phase_min_period)[0]])[0]
+        else:
+            min_depth_phase = None
+            max_depth_phase = None
+            
+        if sum(group_mask)>0:
+            group_min_period,group_max_period = input_data[0,:][group_mask].min(),input_data[0,:][group_mask].max()
+            # the maximum depth
+            max_depth_group = 1.1 * (group_max_period*input_data[2,np.argwhere(input_data[0,:]==group_max_period)[0]])[0]
+            # the minimum depth 
+            min_depth_group = 1/2 * (group_min_period*input_data[2,np.argwhere(input_data[0,:]==group_min_period)[0]])[0]
+        else:
+            min_depth_group = None
+            max_depth_group = None
+        
+        # the maximum depth
+        if min_depth_group is None:
+            min_depth = min_depth_phase
+        elif min_depth_phase is None:
+            min_depth = min_depth_group
+        else:
+            min_depth       = np.min([min_depth_phase,min_depth_group])
         min_depth_idx   = int(min_depth//0.5)
         
-        max_depth_phase = 1.1 * (phase_max_period*input_data[1,np.argwhere(input_data[0,:]==phase_max_period)[0]])
-        max_depth_group = 1.1 * (group_max_period*input_data[2,np.argwhere(input_data[0,:]==group_max_period)[0]])
-        max_depth       = np.max([max_depth_phase[0],max_depth_group[0]])
+        # the maximum depth
+        if max_depth_group is None:
+            max_depth = max_depth_phase
+        elif max_depth_phase is None:
+            max_depth = max_depth_group
+        else:
+            max_depth       = np.max([max_depth_phase,max_depth_group])
         max_depth_idx   = np.min([400,int(max_depth//0.5)])
         
         if self.train:
