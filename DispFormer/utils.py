@@ -53,7 +53,12 @@ def gen_init_model(t,cg_obs,thick,area=False):
     thick = lay_model[:,0]
     vs = lay_model[:,1]
     vp = 0.9409 + 2.0947*vs - 0.8206*vs**2+ 0.2683*vs**3 - 0.0251*vs**4
+    depth = np.cumsum(thick)
+    
+    mask = depth>120
+    vp[mask] = vs[mask]*1.79
     rho = 1.6612*vp - 0.4721*vp**2 + 0.0671*vp**3 - 0.0043*vp**4 + 0.000106*vp**5
+    
     model = {
         "thick":thick,
         "vp":vp,
