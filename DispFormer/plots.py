@@ -1,47 +1,93 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from scipy.interpolate import interp1d
 
-def plot_vs(depth,vs,linecolor="k",linestyle='-',figsize=(4,6),label=""):
+def plot_vs(depth, vs, linecolor="k", linestyle='-', figsize=(4,6), label=""):
+    """
+    Plots shear wave velocity (Vs) against depth using a step plot.
+
+    Parameters:
+    depth (array-like): Depth values for the y-axis.
+    vs (array-like): Shear wave velocity (Vs) values for the x-axis.
+    linecolor (str): Color of the line (default is black, 'k').
+    linestyle (str): Style of the line (default is solid line, '-').
+    figsize (tuple): Size of the figure (default is (4,6)).
+    label (str): Label for the plot; if provided, a legend will be displayed (default is empty string).
+
+    Returns:
+    None: Displays the plot.
+
+    Notes:
+    - The depth axis is inverted to show depth increasing downward.
+    - If the label is provided, a legend appears in the upper right corner.
+    """
     plt.figure(figsize=figsize)
     if label == "":
-        plt.step(vs,depth,where='post',c=linecolor,linestyle=linestyle)
+        plt.step(vs, depth, where='post', c=linecolor, linestyle=linestyle)
     else:
-        plt.step(vs,depth,where='post',c=linecolor,linestyle=linestyle,label=label)
+        plt.step(vs, depth, where='post', c=linecolor, linestyle=linestyle, label=label)
         plt.legend(loc='upper right')
     plt.gca().invert_yaxis()
     plt.tick_params(labelsize=15)
-    plt.xlabel("Velocity (km/s)",fontsize=15)
-    plt.ylabel("Depth (km)",fontsize=15)
+    plt.xlabel("Velocity (km/s)", fontsize=15)
+    plt.ylabel("Depth (km)", fontsize=15)
     plt.show()
-    
-def plot_disp(period=[],phase_vel=None,group_vel=None,scatter=False):
+
+def plot_disp(period=[], phase_vel=None, group_vel=None, scatter=False):
+    """
+    Plots dispersion curves (phase and/or group velocity) against period.
+
+    Parameters:
+    period (array-like): Period values for the x-axis.
+    phase_vel (array-like, optional): Phase velocity values for the y-axis (default is None).
+    group_vel (array-like, optional): Group velocity values for the y-axis (default is None).
+    scatter (bool): If True, scatter plot is used; otherwise, line plot is used (default is False).
+
+    Returns:
+    None: Displays the plot.
+
+    Notes:
+    - If both phase and group velocities are provided, they will be plotted in different colors.
+    - If scatter is set to True, the points are plotted as scatter plots.
+    """
     plt.figure()
     if phase_vel is not None:
         if scatter:
-            plt.scatter(period,phase_vel,c='r',label="phase velocity")
+            plt.scatter(period, phase_vel, c='r', label="phase velocity")
         else:
-            plt.plot(period,phase_vel,c='r',label="phase velocity")
+            plt.plot(period, phase_vel, c='r', label="phase velocity")
     if group_vel is not None:
         if scatter:
-            plt.scatter(period,group_vel,c='b',label="group velocity")
+            plt.scatter(period, group_vel, c='b', label="group velocity")
         else:
-            plt.plot(period,group_vel,c='b',label="group velocity")
+            plt.plot(period, group_vel, c='b', label="group velocity")
     plt.legend()
     plt.tick_params(labelsize=15)
-    plt.xlabel("Period (s)",fontsize=15)
-    plt.ylabel("Velocity (km/s)",fontsize=15)
+    plt.xlabel("Period (s)", fontsize=15)
+    plt.ylabel("Velocity (km/s)", fontsize=15)
     plt.show()
 
 ##################################################################################
 #                               Loading the colormap
 ##################################################################################
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-from scipy.interpolate import interp1d
-
 # Parse .cpt file and generate a color dictionary
 def load_cpt(file_path, num_colors=None, reverse=False):
+    """
+    Parses a .cpt (Color Palette Table) file and generates a colormap.
+
+    Parameters:
+    file_path (str): Path to the .cpt file.
+    num_colors (int, optional): Number of colors for interpolation. If None, discrete colors are used without interpolation.
+    reverse (bool, optional): If True, reverse the colormap. Default is False.
+
+    Returns:
+    ListedColormap or LinearSegmentedColormap: The colormap generated from the .cpt file.
+
+    Notes:
+    - If num_colors is None, the function returns a ListedColormap based on the exact colors from the file.
+    - If num_colors is specified, the colormap is interpolated to generate the requested number of colors.
+    """
     positions = []
     colors = []
     with open(file_path) as f:

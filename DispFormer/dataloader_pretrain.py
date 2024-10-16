@@ -58,7 +58,7 @@ class DispersionDatasets(Dataset):
                  layer_number: int = 100,
                  layer_used_range: List[float] = [0, 100],
                  layer_interp_kind: str = "nearest",
-                 num_workers: int = 0,
+                 num_workers: int = 4,
                  augmentation_train_data: bool = True,
                  noise_level: float = 0.02,
                  mask_ratio: float = 0.1,

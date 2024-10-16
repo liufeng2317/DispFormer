@@ -110,47 +110,121 @@ def gen_model(depth,vs,area=False,Brocher=True):
         return model
     
 def smooth_data(y, window_size=7):
-    # 保留第一个点
+    """
+    Smooth the input data using a moving average filter, with padding to reduce edge effects.
+    
+    Parameters:
+    y (array-like): The input data to be smoothed.
+    window_size (int): Size of the moving average window (default is 7).
+    
+    Returns:
+    y_smooth (array-like): Smoothed data.
+    """
+
+    # Save the first data point to preserve it after smoothing
     first_point = y[0]
 
-    # 创建平滑窗口
+    # Create a moving average window (a window of ones normalized by the window size)
     window = np.ones(window_size) / window_size
 
-    # 使用reflect填充以减轻边缘效应
+    # Pad the input data using 'reflect' mode to minimize edge effects during convolution
     y_padded = np.pad(y, (window_size // 2, window_size // 2), mode='reflect')
+
+    # Apply the convolution between the padded data and the smoothing window
     y_smooth = np.convolve(y_padded, window, mode='valid')
 
-    # 将第一个点替换为原始数据中的第一个点
+    # Replace the first point of the smoothed data with the original first point
     y_smooth[0] = first_point
     
     return y_smooth
+
 
 #################################################################
 #################################################################
 
 def NMSE(output, target):
+    """
+    Computes the Normalized Mean Squared Error (NMSE) between the output and target tensors.
+    
+    Parameters:
+    output (torch.Tensor): Predicted output.
+    target (torch.Tensor): Ground truth target.
+    
+    Returns:
+    torch.Tensor: The NMSE value.
+    """
     return torch.sum(((output - target) / target) ** 2)
 
-# NMSE: defined by self
 def NMSE_np(output, target):
+    """
+    Computes the Normalized Mean Squared Error (NMSE) using NumPy arrays.
+    
+    Parameters:
+    output (np.array): Predicted output.
+    target (np.array): Ground truth target.
+    
+    Returns:
+    float: The NMSE value.
+    """
     return np.sum(((output - target) / target) ** 2)
 
-# MAPE: Mean Absolute Percentage Error
+
 def MAPE_np(output, target):
+    """
+    Computes the Mean Absolute Percentage Error (MAPE) using NumPy arrays.
+    
+    Parameters:
+    output (np.array): Predicted output.
+    target (np.array): Ground truth target.
+    
+    Returns:
+    float: The MAPE value, expressed as a percentage.
+    """
     return np.mean(np.abs((output - target) / target)) * 100
 
-# MSE: Mean Squared Error
+
 def MSE_np(output, target):
-    return np.mean((output - target) ** 2)*1000
+    """
+    Computes the Mean Squared Error (MSE) using NumPy arrays.
+    
+    Parameters:
+    output (np.array): Predicted output.
+    target (np.array): Ground truth target.
+    
+    Returns:
+    float: The MSE value, scaled by 1000.
+    """
+    return np.mean((output - target) ** 2) * 1000
 
-# MAE: Mean Absolute Error
+
 def MAE_np(output, target):
-    return np.mean(np.abs(output - target))*1000
+    """
+    Computes the Mean Absolute Error (MAE) using NumPy arrays.
+    
+    Parameters:
+    output (np.array): Predicted output.
+    target (np.array): Ground truth target.
+    
+    Returns:
+    float: The MAE value, scaled by 1000.
+    """
+    return np.mean(np.abs(output - target)) * 1000
 
-# MAE for each layers
-def MAE_layers_np(output,target):
-    results =  np.mean(np.abs(output - target),axis=0)*100
+
+def MAE_layers_np(output, target):
+    """
+    Computes the Mean Absolute Error (MAE) for each layer (dimension) of the output using NumPy arrays.
+    
+    Parameters:
+    output (np.array): Predicted output with multiple layers.
+    target (np.array): Ground truth target with multiple layers.
+    
+    Returns:
+    np.array: The MAE value for each layer, scaled by 100.
+    """
+    results = np.mean(np.abs(output - target), axis=0) * 100
     return results
+
 
 #################################################################
 #################################################################
@@ -163,49 +237,60 @@ def plot_matrix(matrix, learning_rates, sparse_nums, plot_base_path,
                 metric_name="Metric", save_name="",
                 show=True):
     """
-    绘制2D热力图并标记每行的最小值
-    
+    Plot a 2D heatmap of the matrix with annotations and highlight the minimum value in each row.
+
     Args:
-    - matrix (np.array): 待绘制的矩阵
-    - learning_rates (list): 学习率列表（列标签）
-    - sparse_nums (list): 稀疏数列表（行标签）
-    - plot_base_path (str): 保存路径的基础路径
-    - metric_name (str): 矩阵对应的指标名称 (如 'NMSE', 'MSE', 'MAE', 'MAPE')
-    - save_name (str): 保存文件的名称
+    - matrix (np.array): The matrix to be plotted.
+    - learning_rates (list): List of learning rates (column labels).
+    - sparse_nums (list): List of sparse numbers (row labels).
+    - plot_base_path (str): Base path for saving the plot.
+    - metric_name (str): Name of the metric the matrix represents (e.g., 'NMSE', 'MSE', 'MAE', 'MAPE').
+    - save_name (str): Name of the file to save the plot.
+    - show (bool): If True, display the plot. If False, close the plot after saving.
+
+    Returns:
+    None
     """
-    # 转换为numpy数组，便于绘图
+    
+    # Convert the input matrix to a numpy array for easier plotting
     matrix_np = np.array(matrix)
 
-    # 绘制2D热力图
+    # Create a figure for the heatmap
     plt.figure(figsize=(8, 6))
+    
+    # Plot the matrix as a heatmap using a 'cool' colormap
     plt.imshow(matrix_np, cmap='cool', aspect='auto', interpolation='none')
 
-    # 在格点上显示数值
+    # Annotate each cell of the matrix with the corresponding value
     for i in range(len(sparse_nums)):
         for j in range(len(learning_rates)):
             plt.text(j, i, f"{matrix_np[i, j]:.2f}", ha='center', va='center', color='k')
 
-    # 查找每行的最小值并用红色方框标记
-    ax = plt.gca()  # 获取当前坐标轴
+    # Find and highlight the minimum value in each row
+    ax = plt.gca()  # Get the current axes
     for i in range(len(sparse_nums)):
-        min_index = np.argmin(matrix_np[i, :])  # 找到每行的最小值索引
-        # 添加红色方框
+        min_index = np.argmin(matrix_np[i, :])  # Find the index of the minimum value in the row
+        # Draw a red rectangle around the cell with the minimum value
         rect = patches.Rectangle((min_index - 0.5, i - 0.5), 1, 1, linewidth=2, edgecolor='red', facecolor='none')
         ax.add_patch(rect)
 
-    # 颜色条、标签和标题
+    # Add a colorbar to the plot
     plt.colorbar(label=metric_name)
+
+    # Set the x-axis and y-axis labels
     plt.xticks(np.arange(len(learning_rates)), learning_rates)
     plt.yticks(np.arange(len(sparse_nums)), sparse_nums)
     plt.xlabel('Learning Rate')
     plt.ylabel('Sparse Num')
+
+    # Add a title to the plot
     plt.title(f'{metric_name} vs Learning Rate and Sparse Num')
 
-    # 保存图片
+    # Save the plot to a file if a save name is provided
     if not save_name == "":
         plt.savefig(os.path.join(plot_base_path, save_name), bbox_inches='tight', dpi=300)
 
-    # 显示图像
+    # Show the plot or close it based on the 'show' flag
     if show:
         plt.show()
     else:
