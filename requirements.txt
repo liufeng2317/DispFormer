@@ -1,0 +1,12 @@
+basemap==1.4.1
+basemap_data==1.3.2
+disba==0.6.1
+keras==3.7.0
+matplotlib==3.7.5
+numpy==1.24.4
+p_tqdm==1.4.2
+pyproj==3.5.0
+scikit_learn==1.3.2
+scipy==1.14.1
+torch==2.1.0
+tqdm==4.66.5
