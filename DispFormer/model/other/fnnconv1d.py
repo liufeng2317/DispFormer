@@ -49,11 +49,3 @@ class FNN1D(nn.Module):
         output = self.fc_output(x)
         output *= 6.5  # Scale the output
         return output
-
-# # 示例用法
-# if __name__ == "__main__":
-#     seq_length = 100  # 输入的序列长度
-#     model = FNN1D(in_channels=3, seq_length=seq_length, init_features=32, hidden_dims=[128, 64], output_dim=400)
-#     sample_input = torch.randn(8, 3, seq_length)  # (batch_size, channels, seq_length)
-#     output = model(sample_input)
-#     print(output.shape)  # 应输出 (8, 400)

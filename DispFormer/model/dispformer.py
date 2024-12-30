@@ -32,6 +32,21 @@ def load_model(model, load_path, device):
     return model
 
 class PeriodPositionalEncoding(nn.Module):
+    """
+    This class defines a positional encoding mechanism for surface wave frequency dispersion curves, 
+    where the 'period' of the dispersion curve is used to encode positional information. It modifies 
+    the traditional positional encoding to work with period values rather than sequence indices.
+
+    Parameters:
+    - model_dim (int): The dimensionality of the output positional encoding.
+    - min_period (float): The minimum value of the period (default is 0.005).
+    - max_period (float): The maximum value of the period (default is 200).
+    - device (torch.device): The device on which the encoding is computed (default is CPU).
+    
+    The encoding is applied to the period values, where each period is treated as a continuous input 
+    rather than a discrete index, and a logarithmic scaling is used to normalize the periods to a 
+    common range before encoding.
+    """
     def __init__(self, model_dim, min_period=0.005, max_period=200, device=torch.device('cpu')):
         super(PeriodPositionalEncoding, self).__init__()
         self.model_dim = model_dim
@@ -48,9 +63,9 @@ class PeriodPositionalEncoding(nn.Module):
         valid_periods = periods.clone()
         valid_periods[invalid_mask] = self.min_period  # Replace invalid periods with min_period for calculation
 
-        # Convert periods to logarithmic scale and normalize
-        min_period_tensor = torch.tensor(self.min_period, device=self.device, dtype=torch.float)
-        max_period_tensor = torch.tensor(self.max_period, device=self.device, dtype=torch.float)
+        # normalize the period information
+        min_period_tensor  = torch.tensor(self.min_period, device=self.device, dtype=torch.float)
+        max_period_tensor  = torch.tensor(self.max_period, device=self.device, dtype=torch.float)
         periods_normalized = (torch.log(valid_periods) - torch.log(min_period_tensor)) / \
                              (torch.log(max_period_tensor) - torch.log(min_period_tensor))
 
@@ -72,11 +87,52 @@ class PeriodPositionalEncoding(nn.Module):
         return pos_enc
 
 class DispersionTransformer(nn.Module):
+    """
+    A Transformer-based model for surface wave dispersion curve inversion, specifically designed 
+    to predict 1-D velocity models based on dispersion curve data. It processes three input sequences: 
+        period, phase velocity, and group velocity
+    using a combination of:
+        linear embeddings, positional encoding, and a transformer encoder to capture complex relationships in the data.
+
+    Parameters:
+    - model_dim (int): The dimensionality of the model's hidden states. This defines the size of the vectors used for 
+    embeddings and transformer layers.
+    - num_heads (int): The number of attention heads in the transformer encoder. This controls how the model attends 
+    to different parts of the input sequence in parallel.
+    - num_layers (int): The number of transformer encoder layers. Each layer performs self-attention and feed-forward 
+    transformations to encode the input sequence.
+    - output_dim (int): The dimensionality of the output. This is typically the size of the final prediction vector, 
+    which could correspond to a specific velocity model or other target variable.
+    - device (torch.device): The device (e.g., 'cpu' or 'cuda') where the model will run, allowing the model to be 
+    trained and evaluated on different hardware.
+
+    The model works in the following steps:
+    1. **Embedding of Phase and Group Velocity**: The phase and group velocity values are passed through linear 
+    layers to map them to the `model_dim` dimensional space.
+    2. **Period Positional Encoding**: The period values are processed using a custom `PeriodPositionalEncoding` 
+    mechanism, which applies a logarithmic transformation to normalize the periods and then encodes them using 
+    a traditional sinusoidal positional encoding.
+    3. **Convolutional Fusion**: The period, phase velocity, and group velocity embeddings are concatenated, 
+    and a 1D convolution is applied to fuse the features, allowing the model to capture local patterns in the 
+    combined embeddings.
+    4. **Transformer Encoding**: The fused embeddings are processed by a multi-layer transformer encoder, which 
+    captures global dependencies between the features across the sequence length.
+    5. **Feature Fusion and Output**: The transformer output is passed through a fully connected layer to 
+    fuse the features, and the final output is produced by a linear layer.
+
+    The model is designed to handle padded input sequences via a binary mask, where values ≤ 0 are ignored during 
+    the processing steps.
+
+    Returns:
+    - output (torch.Tensor): The model's final prediction, scaled by a factor of 6.5, with shape 
+    (batch_size, output_dim).
+    """
+
     def __init__(self, model_dim, num_heads, num_layers, output_dim, device=torch.device('cpu')):
         super(DispersionTransformer, self).__init__()
         self.device = device
-        self.phase_encoding = nn.Linear(1, model_dim).to(device)
-        self.group_encoding = nn.Linear(1, model_dim).to(device)
+        self.phase_encoding           = nn.Linear(1, model_dim).to(device)
+        self.group_encoding           = nn.Linear(1, model_dim).to(device)
         self.period_position_encoding = PeriodPositionalEncoding(model_dim=model_dim, device=device)
         self.transformer_encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(d_model=model_dim, nhead=num_heads).to(device),
@@ -130,7 +186,14 @@ class DispersionTransformer(nn.Module):
         
         return output
     
-    
+
+
+#----------------------------------------------------------------
+#               Exploring Variations of DispFormer
+# This section provides alternative model architectures derived 
+# from the base DispFormer model. You can experiment with different 
+# configurations to find the optimal model for your specific task.
+#----------------------------------------------------------------
 class DispersionTransformer_linearEmbedding(nn.Module):
     def __init__(self, model_dim, num_heads, num_layers, output_dim, device=torch.device('cpu')):
         super(DispersionTransformer_linearEmbedding, self).__init__()
@@ -232,7 +295,6 @@ class DispersionTransformer_linear_posEmbedding(nn.Module):
         output *= 6.5  # Scale the output
 
         return output
-
 
 class DispersionTransformer_nofusion(nn.Module):
     def __init__(self, model_dim, num_heads, num_layers, output_dim, device=torch.device('cpu')):

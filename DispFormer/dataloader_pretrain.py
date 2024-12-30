@@ -8,6 +8,31 @@ from typing import List
 
 
 def train_collate_fn(batch):
+    """
+    Collate function for batching data during training. This function takes a list of samples (tuples of data, masks, 
+    labels, and labels_used_layer), processes them to ensure uniformity in sequence length, applies padding, 
+    and prepares the data for feeding into a neural network model.
+
+    Parameters:
+    - batch (list of tuples)                : A list where each element is a tuple containing:
+        - data (torch.Tensor)               : The input data for the model, typically of shape (batch_size, seq_length).
+        - data_mask (torch.Tensor)          : A mask for the input data, indicating valid (1) and padded (0) values.
+        - labels (torch.Tensor)             : The target labels corresponding to the input data.
+        - labels_used_layer (torch.Tensor)  : A tensor indicating which layers were used for the labels.
+
+    Returns:
+    - padded_data (torch.Tensor): The input data padded to the maximum sequence length within the batch, 
+      with padding values set to -1 for consistency.
+    - padded_data_mask (torch.Tensor): A mask for the padded input data, marking positions that are padded.
+    - labels (torch.Tensor): A stacked tensor of labels for the entire batch.
+    - labels_uselayer (torch.Tensor): A stacked tensor of labels_used_layer for the entire batch.
+
+    This function performs the following:
+        1. Pads the input data sequences to the maximum length within the batch.
+        2. Adjusts any input values that are zero to -1 (for consistency in handling padding).
+        3. Creates a mask to indicate padded positions in the input data.
+        4. Stacks the labels and labels_used_layer tensors into single tensors for easy batch processing.
+    """
     data, data_mask, labels,labels_used_layer = zip(*batch)
     # Find the maximum length in the batch
     max_length = max(d.size(1) for d in data)
@@ -31,6 +56,26 @@ def train_collate_fn(batch):
     return padded_data,padded_data_mask,labels,labels_uselayer
 
 def test_collate_fn(batch):
+    """
+    Collate function for batching data during testing. This function takes a list of samples (tuples of data and 
+    masks), processes them to ensure uniform sequence length, applies padding, and prepares the data for testing 
+    a model.
+
+    Parameters:
+    - batch (list of tuples): A list where each element is a tuple containing:
+        - data (torch.Tensor): The input data for the model, typically of shape (batch_size, seq_length).
+        - data_mask (torch.Tensor): A mask for the input data, indicating valid (1) and padded (0) values.
+
+    Returns:
+    - padded_data (torch.Tensor): The input data padded to the maximum sequence length within the batch, 
+      with padding values set to -1 for consistency.
+    - padded_data_mask (torch.Tensor): A mask for the padded input data, marking positions that are padded.
+
+    This function performs the following:
+        1. Pads the input data sequences to the maximum length within the batch.
+        2. Adjusts any input values that are zero to -1 (for consistency in handling padding).
+        3. Creates a mask to indicate padded positions in the input data.
+    """
     data, data_mask = zip(*batch)
     # Find the maximum length in the batch
     max_length = max(d.size(1) for d in data)
@@ -49,6 +94,53 @@ def test_collate_fn(batch):
     return padded_data,padded_data_mask
 
 class DispersionDatasets(Dataset):
+    """ used in pre-training
+    This class represents a dataset for DispFormer, suitable for training or evaluating a model
+    that predicts subsurface velocity models.The dataset supports both training and evaluation modes, 
+    with options to augment the data, add noise, and mask parts of the input sequences to improve model robustness and generalization.
+
+    Attributes:
+    - input_data_path (str): Path to the input dispersion data file, which contains three columns per sample: 
+      [period, phase velocity, group velocity].
+    - input_label_path (str): Path to the velocity model file, which contains four columns per sample: 
+      [depth, P-wave velocity (vp), S-wave velocity (vs), density (rho)].
+    - train (bool): A flag indicating whether the dataset is used for training or testing.
+    - interp_layer (bool): Whether to automatically interpolate the layers to have equal thickness.
+        - layer_thickness (float): The thickness of each interpolated layer (used when `interp_layer=True`).
+        - layer_number (int): The number of layers in the velocity model, used for interpolation and layer extraction.
+        - layer_interp_kind (str): The interpolation method for adjusting the layer thickness, e.g., 'nearest', 'linear'.
+    - layer_used_range (List[float]): The range of layers (depth range) to use from the velocity model. (not used in pre-training)
+    - num_workers (int): The number of workers for parallel data loading (used when loading large datasets).
+    - augmentation_train_data (bool): Whether to apply data augmentation during training (such as noise, masking, etc.).
+        - noise_level (float): The standard deviation of the noise added to the dispersion data during training (for augmentation).
+        - mask_ratio (float): The fraction of the input data to randomly mask during training as part of the data augmentation.
+        - remove_phase_ratio (float): The fraction of phase velocity data to randomly remove for augmentation during training.
+        - remove_group_ratio (float): The fraction of group velocity data to randomly remove for augmentation during training.
+        - max_masking_length (int): The maximum length of sequences to mask in the dispersion data during training.
+
+    Methods:
+    - __len__: Returns the total number of samples in the dataset.
+    - __getitem__: Loads and returns a sample from the dataset, including both input data and corresponding labels.
+    - _load_input_data: Loads the dispersion data from the input file (not implemented here, can be customized).
+    - _load_output_data: Loads the velocity model data from the label file (not implemented here, can be customized).
+    - _interp_vs: Interpolates the layers to a uniform thickness based on the specified settings.
+    - augmentation: Optionally applies augmentation techniques (e.g., noise, masking) to the training data.
+
+    Usage:
+    The `DispersionDatasets` class is designed to be used with PyTorch's `DataLoader` for efficient data loading 
+    and batching during training and evaluation. It can handle both the dispersion data (input) and the velocity 
+    model labels (output), along with optional data augmentation and masking for training.
+
+    Example:
+        ```python
+        dataset = DispersionDatasets(input_data_path="path_to_dispersion_data.csv", 
+                                    input_label_path="path_to_velocity_model.csv", 
+                                    train=True, 
+                                    augmentation_train_data=True)
+        data_loader = DataLoader(dataset, batch_size=32, shuffle=True)
+        ```
+    """
+
     def __init__(self, 
                  input_data_path: str = "", 
                  input_label_path: str = "", 
@@ -61,11 +153,19 @@ class DispersionDatasets(Dataset):
                  num_workers: int = 4,
                  augmentation_train_data: bool = True,
                  noise_level: float = 0.02,
-                 mask_ratio: float = 0.1,
+                 mask_ratio: float  = 0.1,
                  remove_phase_ratio: float = 0.1,
                  remove_group_ratio: float = 0.1,
                  max_masking_length: int = 30):
-        
+        """
+            input_data_path : the path of dispersion data which contain 3 columns in each samples: 
+                [period,phase velocity, group velocity], details of the loading method can be modified in _load_input_data
+            input_label_path: the path of velocity model which contain 4 columns in each samples : 
+                [depth, vp, vs, rho], details of the loading method can be modified in _load_output_data
+            train: flag to check if train or test
+            interp_layer: automatically interp the layer to equal-thickness layer
+            
+        """
         self.input_data_path = input_data_path
         self.input_label_path = input_label_path
         self.layer_thickness = layer_thickness
@@ -137,7 +237,6 @@ class DispersionDatasets(Dataset):
         
         return input_data
 
-
     def _interp_vs(self, output_data):
         """Interpolate 1D velocity model."""
         depth, vs = output_data[0, :], output_data[1, :]
@@ -170,32 +269,45 @@ class DispersionDatasets(Dataset):
 
         return np.vstack((interp_depth, interp_vs))
 
-    
     def vary_length(self, input_data, masking_value=-1, min_data_length=30, min_end_idx=105):
         """
-        Randomly vary the length of valid data by masking parts of the input data.
+        Randomly selects a region of the input data to simulate varying periods and lengths by masking
+        parts of the data. This function helps simulate varying data lengths, which can be used for 
+        data augmentation, ensuring that the model can generalize well to input data of different lengths.
 
         Parameters:
         -----------
         input_data : torch.Tensor or np.ndarray
-            Input data where:
-            - Row 0: Periods
-            - Row 1: Phase velocities
-            - Row 2: Group velocities
-        
+            The input data that will undergo masking. It should have the shape of (batch_size, num_points).
         masking_value : int, optional
-            The value to use for masking (default is -1).
-
+            The value to use for masking the data. By default, the masking value is -1. This will replace
+            the values outside the valid data range.
         min_data_length : int, optional
-            Minimum length of the valid data region (default is 30).
-
+            The minimum length of valid data (i.e., the region that remains unmasked). The default is 30.
         min_end_idx : int, optional
-            Minimum end index for valid data (default is 105).
-
+            The minimum index for the end of the valid data region. This ensures that even with random masking,
+            the valid data region will not be too short. Default is 105.
+            
         Returns:
         --------
         torch.Tensor or np.ndarray
-            The input data with regions masked according to the specified rules.
+            The input data with certain regions masked according to the specified rules. This is the same 
+            shape as the input data, with parts of it replaced by the `masking_value`.
+
+        Process Overview:
+        -----------------
+        1. The function randomly selects a starting index (`mask_begin_idx`) for the valid region.
+        2. A random length for the valid region is chosen, ensuring the region is at least `min_data_length`.
+        3. The end index of the valid data region (`mask_end_idx`) is adjusted to ensure it meets the minimum 
+        valid length and does not exceed the data size.
+        4. The data outside the valid region is masked by assigning the `masking_value` to the corresponding elements.
+        5. The output is the input data with masked regions.
+
+        Example:
+        --------
+        input_data = torch.ones((1, 200))  # (batch_size=1, num_points=200)
+        result = vary_length(input_data)
+        print(result)  # The data will have masked regions, with values outside the valid region replaced by -1.
         """
         num_points = input_data.shape[1]
         
@@ -218,12 +330,6 @@ class DispersionDatasets(Dataset):
 
 
     def __getitem__(self, index):
-        """
-            input_data:[3,n]:period phase_vel group_vel
-            output_data: [2,n]: thickness,vs
-            input_mask: ignore the input or not
-            self.layer_usage: usage layer
-        """
         input_data = self.input_dataset[index].clone()
         if self.augmentation_train_data and self.train:
             input_data = self.augmentation(input_data)
