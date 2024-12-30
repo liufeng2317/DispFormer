@@ -167,16 +167,13 @@ Real-world data often face challenges such as varying data ranges, missing data,
 ****
 
 ### 📧 Contact & Citation
-This project was developed by Feng Liu at Shanghai Jiao Tong University (SJTU). For any inquiries, please contact Liu Feng via email [liufeng2317@sjtu.edu.cn](liufeng2317@sjtu.edu.cn)
+This project was developed by Feng Liu at Shanghai Jiao Tong University (SJTU). For any inquiries, please contact Liu Feng via email [liufeng2317@sjtu.edu.cn](liufeng2317@sjtu.edu.cn). Due to the large size of the training and testing datasets, they cannot be shared directly. However, if you find the datasets useful, feel free to reach out to me directly for access. 
 
 If you use DispFormer in your research, please cite the following paper:
-
 ```
 DispFormer: Pretrained Transformer for Flexible Dispersion Curve Inversion from Global Synthesis to Local Applications (coming soon)
 ```
-
 and/or the software
-
 ```
 @software{DispFormer_LiuFeng_2024,
   author       = {Feng Liu},
