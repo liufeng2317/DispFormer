@@ -1,0 +1,2 @@
+1. The provided model (transformer.pt) is pretrained on the raw LITHO1.0 dataset.
+2. The provided model (transformer_dataAug.pt) is pretrained on LITHO1.0 with data augmentation, including random noise, random missing values, and varying data ranges.
