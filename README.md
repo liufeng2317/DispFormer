@@ -71,7 +71,7 @@ pip install -r requirements.txt
 
 #### (1) Datasets Overview
 
-The **LITHO1.0** global synthetic dataset is used for pre-training the model, while the **Central and Western US Dataset (CWD)** and **Continental China Dataset (CCD)** are used to validate the effectiveness of the zero-shot and few-shot strategies. Finally, the datasets retrive from **China Seismological Reference Model (CSRM)** are used to test the model.
+The **LITHO1.0** global synthetic dataset is used for pre-training the model, while the **Central and Western US Dataset (CWD)** and **Continental China Dataset (CCD)** are used to validate the effectiveness of the zero-shot and few-shot strategies. Finally, the datasets retrive from **China Seismological Reference Model (CSRM)** are used to test the model. The datasets can be retrieved from the following Zenodo link: [https://zenodo.org/records/14619577](https://zenodo.org/records/14619577)
 
 | **Dataset**                          | **Samples** | **Period** | **Max Depth** | **Tags**   | **Reference**                                                                                   |
 |--------------------------------------|-------------|------------------|-------------------|------------|------------------------------------------------------------------------------------------------|
@@ -167,13 +167,19 @@ Real-world data often face challenges such as varying data ranges, missing data,
 ****
 
 ### 📧 Contact & Citation
-This project was developed by Feng Liu at Shanghai Jiao Tong University (SJTU). For any inquiries, please contact Liu Feng via email [liufeng2317@sjtu.edu.cn](liufeng2317@sjtu.edu.cn). Due to the large size of the training and testing datasets, they cannot be shared directly. However, if you find the datasets useful, feel free to reach out to me directly for access. 
+This project was developed by Feng Liu at Shanghai Jiao Tong University (SJTU). For any inquiries, please contact Liu Feng via email [liufeng2317@sjtu.edu.cn](liufeng2317@sjtu.edu.cn).
 
-If you use DispFormer in your research, please cite the following paper:
+If you find DispFormer or its related publicly available datasets useful in your research, please cite the following papers
+* [DispFormer](https://arxiv.org/abs/2501.04366)
 ```
-DispFormer: Pretrained Transformer for Flexible Dispersion Curve Inversion from Global Synthesis to Local Applications (coming soon)
+Liu, F., Deng, B., Su, R., Bai, L. & Ouyang, W.. DispFormer: Pretrained Transformer for Flexible Dispersion Curve Inversion from Global Synthesis to Regional Applications[J]. arXiv preprint arXiv:2501.04366, 2025.
 ```
-and/or the software
+* [Surface Wave Dispersion Benchmark Datasets](https://zenodo.org/records/14619577):
+```
+Liu, F. (2025). Surface Wave Dispersion Benchmark Datasets: Synthetic and Real-World Cases (1.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.14619577
+```
+
+* and/or the software
 ```
 @software{DispFormer_LiuFeng_2024,
   author       = {Feng Liu},
