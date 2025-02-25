@@ -1,0 +1,15 @@
+Data/
+__pycache__/
+backup/
+Backup/
+*.sh
+log
+datasets/
+Script/DataPrepare
+Script/README.md
+Script/Article-Figure
+Script/ModelDesign-v0
+Script/ModelDesign-v1
+Script/ModelDesign-v2
+Script/ModelDesign-v3
+Script/ModelDesign-v4

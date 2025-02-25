@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/lauguage-python-%233572A5"/>
   <img src="https://img.shields.io/badge/lauguage-jupyter-%23F37626"/>
 </div>
-<h2 align="center">DispFormer: Pretrained Transformer for Flexible Dispersion Curve Inversion from Global Synthesis to Local Applications</h2>
+<h2 align="center">DispFormer: A Pretrained Transformer Incorporating Physical Constraints for Dispersion Curve Inversion</h2>
 
 ---
 
@@ -31,10 +31,14 @@
 
 ### 📚 Introduction
 
-&emsp;&emsp;DispFormer is a transformer-based neural network for inverting S-wave velocity ($v_s$) profiles from Rayleigh-wave phase and/or group dispersion curves. It processes data independently at each period, allowing it to handle datasets with varying lengths and missing data without needing alignment or network modifications. The model works well in zero-shot and few-shot learning scenarios, making it highly efficient and accurate for real-world applications, even when data is sparse or noisy.
+&emsp;&emsp;DispFormer is a transformer-based neural network for inverting S-wave velocity ($v_s$) profiles from Rayleigh-wave phase and/or group dispersion curves. It processes data independently at each period, **allowing it to handle datasets with varying lengths and missing data without needing alignment or network modifications**. The model works well in zero-shot and few-shot learning scenarios, making it highly efficient and accurate for real-world applications, even when data is sparse or noisy.
 
 <p align="center">
   <img src="./Figures/Figure2_DispFormer_Network.png" alt="Synthetic-data Overview" style="max-height: 400px; overflow: auto;">
+</p>
+
+<p align="center">
+  <img src="./Figures/FigureS1_Network_Structure.png" alt="Synthetic-data Overview" style="max-height: 400px; overflow: auto;">
 </p>
 
 <p align="center">
