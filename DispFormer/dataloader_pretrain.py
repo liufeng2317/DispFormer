@@ -313,7 +313,7 @@ class DispersionDatasets(Dataset):
         
         # Randomly choose the starting index and length for the valid data
         mask_begin_idx = np.random.randint(0, 50)
-        mask_length = np.random.randint(min_data_length, max(min_data_length + 1, num_points - min_data_length))
+        mask_length = np.random.randint(min_data_length, max(min_data_length + 1, num_points - min_data_length)) # 105 -> 195
         mask_end_idx = mask_begin_idx + mask_length
         
         # Ensure the mask end index is at least `min_end_idx`
@@ -323,8 +323,12 @@ class DispersionDatasets(Dataset):
         mask_end_idx = min(mask_end_idx, num_points)
 
         # Apply masking to regions outside the valid range
-        input_data[1:, :mask_begin_idx] = masking_value  # Mask the beginning
-        input_data[1:, mask_end_idx:] = masking_value    # Mask the end
+        # ensure at least one point is not masked
+        if input_data[1, mask_begin_idx:mask_end_idx].sum() <= 0 and input_data[2, mask_begin_idx:mask_end_idx].sum() <= 0:
+            pass
+        else:
+            input_data[1:, :mask_begin_idx] = masking_value  # Mask the beginning
+            input_data[1:, mask_end_idx:]   = masking_value  # Mask the end
         
         return input_data
 
@@ -338,7 +342,6 @@ class DispersionDatasets(Dataset):
         input_data = self.vary_length(input_data)
         
         # Masks
-        input_mask = (input_data[1, :] <= 0) & (input_data[2, :] <= 0)
         phase_mask = input_data[1, :] > 0
         group_mask = input_data[2, :] > 0
 
@@ -373,6 +376,7 @@ class DispersionDatasets(Dataset):
         min_depth_idx = max(0, int(min_depth // 0.5)) if min_depth is not None else 0
         max_depth_idx = min(400, int(max_depth // 0.5)) if max_depth is not None else 400
 
+        input_mask = (input_data[1, :] <= 0) & (input_data[2, :] <= 0)
         if self.train:
             output_data = self.output_dataset[index]
             used_layer = torch.tensor([min_depth_idx, max_depth_idx], dtype=torch.int)

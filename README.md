@@ -1,10 +1,9 @@
 
 <div align="center">
-  <img height="150" src="./Figures/logo.png" />
+  <img height="150" src="./Figures/DispFormer.png" />
 </div>
 <br/>
 <div align="center">
-  <img src="https://visitor-badge.laobi.icu/badge?page_id=liufeng2317.liufeng2317&" />
   <img src="https://img.shields.io/github/stars/liufeng2317/DispFormer" />
   <img src="https://img.shields.io/github/forks/liufeng2317/DispFormer" />
 </div>
@@ -17,6 +16,7 @@
 
 ---
 
+- [🔥 News](#-news)
 - [📚 Introduction](#-introduction)
 - [🔧 Installation](#-installation)
 - [🎬 Examples](#-examples)
@@ -26,6 +26,13 @@
   - [(4) Few-shot Inversion](#4-few-shot-inversion)
   - [(5) Real-Case Study](#5-real-case-study)
 - [📧 Contact \& Citation](#-contact--citation)
+
+---
+
+### 🔥 News
+- **2025/08/12**: 🎉 **DispFormer** has been **accepted** for publication in [*JGR: Machine Learning & Computation*](https://agupubs.onlinelibrary.wiley.com/journal/29935210).
+- **2025/08/01**: 📦 **OpenSWI** — A massive-scale benchmark dataset for surface wave dispersion curve inversion — has been released. Related [main page](https://liufeng2317.github.io/OpenSWI/), [codes](https://github.com/liufeng2317/OpenSWI) and [dataset](https://huggingface.co/datasets/LiuFeng2317/OpenSWI) are now available.
+- **2025/01/08**: 📄 **DispFormer** preprint is available on [*arXiv*](https://arxiv.org/abs/2501.04366).
 
 ---
 
@@ -171,7 +178,7 @@ Real-world data often face challenges such as varying data ranges, missing data,
 ****
 
 ### 📧 Contact & Citation
-This project was developed by Feng Liu at Shanghai Jiao Tong University (SJTU). For any inquiries, please contact Liu Feng via email [liufeng2317@sjtu.edu.cn](liufeng2317@sjtu.edu.cn).
+This project was developed by Feng Liu at Shanghai Jiao Tong University (SJTU) and Shanghai Artificial Intelligence Laboratory (PJLAB). For any inquiries, please contact Liu Feng via email [liufeng2317@sjtu.edu.cn](liufeng2317@sjtu.edu.cn).
 
 If you find DispFormer or its related publicly available datasets useful in your research, please cite the following papers
 * [DispFormer](https://arxiv.org/abs/2501.04366)

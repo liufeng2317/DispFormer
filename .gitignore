@@ -3,6 +3,8 @@ __pycache__/
 backup/
 Backup/
 *.sh
+.vscode/
+Demo/
 log
 datasets/
 Script/DataPrepare
